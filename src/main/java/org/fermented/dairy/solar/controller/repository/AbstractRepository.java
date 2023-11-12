@@ -22,8 +22,11 @@ public abstract class AbstractRepository {
             final Connection conn,
             final String insertSql,
             final String... params) throws SQLException {
-        final PreparedStatement ps = conn.prepareStatement(insertSql); //NOSONAR: java:S2095, must be closed by calling class
-        for (int i = 0; i < params.length; i++) ps.setObject(i + 1, params[i]);
+        @SuppressWarnings("SqlSourceToSinkFlow")
+        final PreparedStatement ps = conn.prepareStatement(insertSql); //NOSONAR: java:S2095, read JavaDocs
+        for (int i = 0; i < params.length; i++) {
+            ps.setObject(i + 1, params[i]);
+        }
 
         return ps;
     }

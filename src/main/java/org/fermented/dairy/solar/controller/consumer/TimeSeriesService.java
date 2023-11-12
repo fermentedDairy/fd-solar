@@ -3,7 +3,6 @@ package org.fermented.dairy.solar.controller.consumer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.fermented.dairy.solar.controller.repository.TimeSeriesRepository;
-import org.fermented.dairy.solar.entity.messaging.MqttMessage;
 
 /**
  * Consumes messages for storage in time series storage.
@@ -18,7 +17,7 @@ public class TimeSeriesService {
         this.timeSeriesRepository = timeSeriesRepository;
     }
 
-    public void store(final MqttMessage message) {
-        timeSeriesRepository.recordData(message.topic(), message.value());
+    public void store(final String topic, final String value) {
+        timeSeriesRepository.recordData(topic, value);
     }
 }

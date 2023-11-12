@@ -3,11 +3,10 @@ package org.fermented.dairy.solar.controller.repository;
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.fermented.dairy.solar.entity.exception.RepositoryException;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.fermented.dairy.solar.entity.exception.RepositoryException;
 
 /**
  * Repository for time series data.
@@ -36,7 +35,7 @@ public class TimeSeriesRepository extends AbstractRepository {
      */
     public void recordData(final String name, final String value) {
         try (final Connection conn = defaultDataSource.getConnection();
-             final PreparedStatement ps = getPreparedStatement(conn, INSERT_SQL, name, value);
+             final PreparedStatement ps = getPreparedStatement(conn, INSERT_SQL, name, value)
         ) {
             ps.executeUpdate();
         } catch (final SQLException sqlEx) {
