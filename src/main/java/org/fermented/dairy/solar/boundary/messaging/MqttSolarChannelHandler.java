@@ -2,11 +2,10 @@ package org.fermented.dairy.solar.boundary.messaging;
 
 import io.smallrye.reactive.messaging.mqtt.ReceivingMqttMessage;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.fermented.dairy.solar.controller.consumer.TimeSeriesService;
@@ -33,7 +32,7 @@ public class MqttSolarChannelHandler {
      * @param message the message
      * @return ack CompletionStage
      */
-    @Incoming("solarState")
+    @Incoming("solarstate")
     public CompletionStage<Void> consume(final Message<byte[]> message) {
         // process your price.
         try {

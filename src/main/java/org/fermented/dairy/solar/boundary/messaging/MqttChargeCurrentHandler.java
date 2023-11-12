@@ -33,9 +33,9 @@ public class MqttChargeCurrentHandler {
      * @param message incoming message
      * @return PublisherBuilder of message containing new max charge current
      */
-    @Incoming("maxSolarChargeCurrentState")
-    @Incoming("inverterTemperatureState")
-    @Outgoing("maxSolarChargeCurrentSet")
+    @Incoming("maxsolarchargecurrentstate")
+    @Incoming("invertertemperaturestate")
+    @Outgoing("maxsolarchargecurrentset")
     public PublisherBuilder<Message<Integer>> setSolarChargeCurrent(final Message<byte[]> message) {
 
         final Optional<Integer> chargeCurrent = chargeCurrentService.getRequiredCurrent(
