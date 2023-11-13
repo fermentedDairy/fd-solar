@@ -31,7 +31,9 @@ public class MqttSolarChannelHandler {
      * @param message the message
      * @return ack CompletionStage
      */
-    @Incoming("solarstate")
+    @Incoming("inverterstate")
+    @Incoming("batterystate")
+    @Incoming("totalstate")
     public CompletionStage<Void> consume(final Message<byte[]> message) {
         // process your price.
         try {
