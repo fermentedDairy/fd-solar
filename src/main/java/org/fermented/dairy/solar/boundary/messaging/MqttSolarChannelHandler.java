@@ -1,12 +1,9 @@
 package org.fermented.dairy.solar.boundary.messaging;
 
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.mqtt.ReceivingMqttMessage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,7 +46,7 @@ public class MqttSolarChannelHandler {
     @Incoming("inverterstate")
     @Incoming("batterystate")
     @Incoming("totalstate")
-    public Uni<List<DataPoint>> consume(final Message<byte[]> message) {
+    public java.util.concurrent.CompletionStage<Void> consume(final Message<byte[]> message) {
         try {
             final String topic = ((ReceivingMqttMessage) message).getTopic();
             if (RECORDING_TOPICS.contains(topic)) {
@@ -60,6 +57,6 @@ public class MqttSolarChannelHandler {
             //Not too worried here, I want to consume the msg anyway, attempt to process the ones behind it.
             log.log(Level.SEVERE, th, () -> "Could not process message.");
         }
-        return null;
+        return message.ack();
     }
 }
