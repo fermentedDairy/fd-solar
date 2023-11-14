@@ -34,26 +34,20 @@ public class TimeSeriesRepository extends AbstractRepository {
     }
 
     /**
-     * Record data points into time series store.
+     * Record data point into time series store.
      *
-     * @param dataPoints Data points to record
+     * @param dataPoint Data point to record
      */
-    public void recordData(final List<DataPoint> dataPoints) {
-        log.info(() -> "Processing list of size %d".formatted(dataPoints.size()));
+    public void recordData(final DataPoint dataPoint) {
         try (final Connection conn = defaultDataSource.getConnection();
-             final PreparedStatement ps = getPreparedStatement(conn, INSERT_SQL)
+             final PreparedStatement ps = getPreparedStatement(
+                     conn,
+                     INSERT_SQL,
+                     dataPoint.offsetDateTime(),
+                     dataPoint.topic(),
+                     dataPoint.value())
         ) {
-            for (int i = 0; i < dataPoints.size(); i++) {
-                final DataPoint dataPoint = dataPoints.get(i);
-                ps.setObject(1, dataPoint.offsetDateTime());
-                ps.setString(2, dataPoint.topic());
-                ps.setString(3, dataPoint.value());
-                ps.addBatch();
-                if ((i + 1) % 30 == 0) {
-                    ps.executeBatch();
-                }
-            }
-            ps.executeBatch();
+            ps.executeUpdate();
         } catch (final SQLException sqlEx) {
             throw new RepositoryException(
                     "Could not record data points",

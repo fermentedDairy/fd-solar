@@ -21,7 +21,7 @@ public abstract class AbstractRepository {
     protected PreparedStatement getPreparedStatement(
             final Connection conn,
             final String insertSql,
-            final String... params) throws SQLException {
+            final Object... params) throws SQLException {
         @SuppressWarnings("SqlSourceToSinkFlow")
         final PreparedStatement ps = conn.prepareStatement(insertSql); //NOSONAR: java:S2095, read JavaDocs
         for (int i = 0; i < params.length; i++) {

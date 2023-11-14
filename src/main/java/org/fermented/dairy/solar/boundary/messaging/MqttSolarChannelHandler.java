@@ -7,6 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -22,6 +23,16 @@ public class MqttSolarChannelHandler {
 
     private final TimeSeriesRepository timeSeriesRepository;
 
+    private Set<String> RECORDING_TOPICS = Set.of(
+            "solar_assistant/inverter_1/grid_voltage/state",
+            "solar_assistant/inverter_1/grid_frequency/state",
+            "solar_assistant/battery_1/power/state",
+            "solar_assistant/inverter_1/temperature/state",
+            "solar_assistant/inverter_1/max_charge_current/state",
+            "solar_assistant/battery_1/state_of_charge/state",
+            "solar_assistant/battery_1/current/state"
+    );
+
     @Inject
     public MqttSolarChannelHandler(final TimeSeriesRepository timeSeriesRepository) {
         this.timeSeriesRepository = timeSeriesRepository;
@@ -32,19 +43,18 @@ public class MqttSolarChannelHandler {
     /**
      * Consumer method.
      *
-     * @param multiMessage the Multi of messages to process
+     * @param message messages to consume
      * @return
      */
     @Incoming("inverterstate")
     @Incoming("batterystate")
     @Incoming("totalstate")
-    public Uni<List<DataPoint>> consume(final Multi<Message<byte[]>> multiMessage) {
-        // process your price.
+    public Uni<List<DataPoint>> consume(final Message<byte[]> message) {
         try {
-
-            return multiMessage.map(message ->
-                    new DataPoint(((ReceivingMqttMessage) message).getTopic(), new String(message.getPayload())))
-                    .collect().asList().invoke(timeSeriesRepository::recordData);
+            final String topic = ((ReceivingMqttMessage) message).getTopic();
+            if (RECORDING_TOPICS.contains(topic)) {
+                timeSeriesRepository.recordData(new DataPoint(topic, new String(message.getPayload())));
+            }
 
         } catch (final Exception th) {
             //Not too worried here, I want to consume the msg anyway, attempt to process the ones behind it.
