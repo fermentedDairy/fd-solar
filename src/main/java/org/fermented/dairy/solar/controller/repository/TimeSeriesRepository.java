@@ -6,7 +6,11 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.logging.Logger;
+
 import org.fermented.dairy.solar.entity.exception.RepositoryException;
+import org.fermented.dairy.solar.entity.messaging.DataPoint;
 
 /**
  * Repository for time series data.
@@ -14,10 +18,12 @@ import org.fermented.dairy.solar.entity.exception.RepositoryException;
 @ApplicationScoped
 public class TimeSeriesRepository extends AbstractRepository {
 
+    private static final Logger log = Logger.getLogger(TimeSeriesRepository.class.getName());
+
     private static final String INSERT_SQL = """
             INSERT INTO solar.solardata
-                                  (topic, value)
-                                  VALUES(?, ?);
+                (time, topic, value)
+                VALUES(?, ?, ?);
             """;
 
     private final AgroalDataSource defaultDataSource;
@@ -28,19 +34,29 @@ public class TimeSeriesRepository extends AbstractRepository {
     }
 
     /**
-     * Record datapoint inf time series store.
+     * Record data points into time series store.
      *
-     * @param name Name of the data
-     * @param value Value to be recorded
+     * @param dataPoints Data points to record
      */
-    public void recordData(final String name, final String value) {
+    public void recordData(final List<DataPoint> dataPoints) {
+        log.info(() -> "Processing list of size %d".formatted(dataPoints.size()));
         try (final Connection conn = defaultDataSource.getConnection();
-             final PreparedStatement ps = getPreparedStatement(conn, INSERT_SQL, name, value)
+             final PreparedStatement ps = getPreparedStatement(conn, INSERT_SQL)
         ) {
-            ps.executeUpdate();
+            for (int i = 0; i < dataPoints.size(); i++) {
+                final DataPoint dataPoint = dataPoints.get(i);
+                ps.setObject(1, dataPoint.offsetDateTime());
+                ps.setString(2, dataPoint.topic());
+                ps.setString(3, dataPoint.value());
+                ps.addBatch();
+                if ((i + 1) % 30 == 0) {
+                    ps.executeBatch();
+                }
+            }
+            ps.executeBatch();
         } catch (final SQLException sqlEx) {
             throw new RepositoryException(
-                    () -> "Could not record data point named '%s' with value '%s'".formatted(name, value),
+                    "Could not record data points",
                     sqlEx);
         }
     }
