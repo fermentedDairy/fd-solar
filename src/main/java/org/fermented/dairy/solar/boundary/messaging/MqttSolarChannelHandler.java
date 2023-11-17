@@ -1,12 +1,15 @@
 package org.fermented.dairy.solar.boundary.messaging;
 
+import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.mqtt.ReceivingMqttMessage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.fermented.dairy.solar.controller.repository.TimeSeriesRepository;
@@ -19,20 +22,13 @@ import org.fermented.dairy.solar.entity.messaging.DataPoint;
 public class MqttSolarChannelHandler {
 
     private final TimeSeriesRepository timeSeriesRepository;
-
-    private Set<String> RECORDING_TOPICS = Set.of(
-            "solar_assistant/inverter_1/grid_voltage/state",
-            "solar_assistant/inverter_1/grid_frequency/state",
-            "solar_assistant/battery_1/power/state",
-            "solar_assistant/inverter_1/temperature/state",
-            "solar_assistant/inverter_1/max_charge_current/state",
-            "solar_assistant/battery_1/state_of_charge/state",
-            "solar_assistant/battery_1/current/state"
-    );
+    private final Emitter<DataPoint> emitterForDataPoints;
 
     @Inject
-    public MqttSolarChannelHandler(final TimeSeriesRepository timeSeriesRepository) {
+    public MqttSolarChannelHandler(final TimeSeriesRepository timeSeriesRepository,
+                                   @Channel("data") final Emitter<DataPoint> emitterForDataPoints) {
         this.timeSeriesRepository = timeSeriesRepository;
+        this.emitterForDataPoints = emitterForDataPoints;
     }
 
     private static final Logger log = Logger.getLogger(MqttSolarChannelHandler.class.getName());
@@ -46,17 +42,21 @@ public class MqttSolarChannelHandler {
     @Incoming("inverterstate")
     @Incoming("batterystate")
     @Incoming("totalstate")
-    public java.util.concurrent.CompletionStage<Void> consume(final Message<byte[]> message) {
+    public CompletionStage<Void> consume(final Message<byte[]> message) {
         try {
             final String topic = ((ReceivingMqttMessage) message).getTopic();
-            if (RECORDING_TOPICS.contains(topic)) {
-                timeSeriesRepository.recordData(new DataPoint(topic, new String(message.getPayload())));
-            }
-
+            emitterForDataPoints.send(
+                    new DataPoint(topic, new String(message.getPayload()))
+            );
         } catch (final Exception th) {
             //Not too worried here, I want to consume the msg anyway, attempt to process the ones behind it.
             log.log(Level.SEVERE, th, () -> "Could not process message.");
         }
         return message.ack();
+    }
+
+    @Incoming("data")
+    public void consume(final Multi<DataPoint> multiData) {
+        multiData.collect().asList().invoke(timeSeriesRepository::recordDatapoints);
     }
 }
