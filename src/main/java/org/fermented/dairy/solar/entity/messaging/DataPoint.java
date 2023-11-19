@@ -1,7 +1,6 @@
 package org.fermented.dairy.solar.entity.messaging;
 
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 
 /**
  * Record modeling a time series data point.

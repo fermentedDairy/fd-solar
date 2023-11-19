@@ -2,16 +2,18 @@ package org.fermented.dairy.solar.controller.consumer.health;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Liveness;
 import org.fermented.dairy.solar.controller.repository.TimeSeriesRepository;
 import org.fermented.dairy.solar.entity.messaging.DataPoint;
 
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-
+/**
+ * Liveness check for Time Data processing.
+ * Rule: unhealthy if the latest data point is older than 30s. Under normal operation, messages are produces at least every 30s
+ */
 @Liveness
 @ApplicationScoped
 public class TimeDataHealth implements HealthCheck {
